@@ -1,3 +1,5 @@
+### Julian Schilliger - ThaumatoAnakalyptor - Vesuvius Challenge 2023
+
 from rendering_utils.interpolate_image_3d import extract_from_image_3d, insert_into_image_3d
 from rendering_utils.ppmparser import PPMParser
 import argparse
@@ -15,61 +17,61 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import multiprocessing
 
 def load_grid(path_template, cords, grid_block_size=500, cell_block_size=500, uint8=True):
-        """
-        path_template: Template for the path to load individual grid files
-        cords: Tuple (x, y, z) representing the corner coordinates of the grid block
-        grid_block_size: Size of the grid block
-        cell_block_size: Size of the individual grid files
-        """
-        # make grid_block_size an array with 3 elements
-        if isinstance(grid_block_size, int):
-            grid_block_size = np.array([grid_block_size, grid_block_size, grid_block_size])
-        
-        # Convert corner coordinates to file indices and generate the file path
-        # Starting indices
-        file_x_start, file_y_start, file_z_start = cords[0]//cell_block_size, cords[1]//cell_block_size, cords[2]//cell_block_size
-        # Ending indices
-        file_x_end, file_y_end, file_z_end = (cords[0] + grid_block_size[0])//cell_block_size, (cords[1] + grid_block_size[1])//cell_block_size, (cords[2] + grid_block_size[2])//cell_block_size
+    """
+    path_template: Template for the path to load individual grid files
+    cords: Tuple (x, y, z) representing the corner coordinates of the grid block
+    grid_block_size: Size of the grid block
+    cell_block_size: Size of the individual grid files
+    """
+    # make grid_block_size an array with 3 elements
+    if isinstance(grid_block_size, int):
+        grid_block_size = np.array([grid_block_size, grid_block_size, grid_block_size])
+    
+    # Convert corner coordinates to file indices and generate the file path
+    # Starting indices
+    file_x_start, file_y_start, file_z_start = cords[0]//cell_block_size, cords[1]//cell_block_size, cords[2]//cell_block_size
+    # Ending indices
+    file_x_end, file_y_end, file_z_end = (cords[0] + grid_block_size[0])//cell_block_size, (cords[1] + grid_block_size[1])//cell_block_size, (cords[2] + grid_block_size[2])//cell_block_size
 
-        # Generate the grid block
-        if uint8:
-            grid_block = np.zeros((grid_block_size[2], grid_block_size[0], grid_block_size[1]), dtype=np.uint8)
-        else:
-            grid_block = np.zeros((grid_block_size[2], grid_block_size[0], grid_block_size[1]), dtype=np.uint16)
+    # Generate the grid block
+    if uint8:
+        grid_block = np.zeros((grid_block_size[2], grid_block_size[0], grid_block_size[1]), dtype=np.uint8)
+    else:
+        grid_block = np.zeros((grid_block_size[2], grid_block_size[0], grid_block_size[1]), dtype=np.uint16)
 
-        # Load the grid block from the individual grid files and place it in the larger grid block
-        for file_x in range(file_x_start, file_x_end + 1):
-            for file_y in range(file_y_start, file_y_end + 1):
-                for file_z in range(file_z_start, file_z_end + 1):
-                    path = path_template.format(file_x, file_y, file_z)
+    # Load the grid block from the individual grid files and place it in the larger grid block
+    for file_x in range(file_x_start, file_x_end + 1):
+        for file_y in range(file_y_start, file_y_end + 1):
+            for file_z in range(file_z_start, file_z_end + 1):
+                path = path_template.format(file_x, file_y, file_z)
 
-                    # Check if the file exists
-                    if not os.path.exists(path):
-                        # print(f"File {path} does not exist.")
-                        continue
+                # Check if the file exists
+                if not os.path.exists(path):
+                    # print(f"File {path} does not exist.")
+                    continue
 
-                    # Read the image
-                    with tifffile.TiffFile(path) as tif:
-                        images = tif.asarray()
+                # Read the image
+                with tifffile.TiffFile(path) as tif:
+                    images = tif.asarray()
 
-                    if uint8:
-                        images = np.uint8(images//256)
+                if uint8:
+                    images = np.uint8(images//256)
 
-                    # grid block slice position for the current file
-                    x_start = max(file_x*cell_block_size, cords[0])
-                    x_end = min((file_x + 1) * cell_block_size, cords[0] + grid_block_size[0])
-                    y_start = max(file_y*cell_block_size, cords[1])
-                    y_end = min((file_y + 1) * cell_block_size, cords[1] + grid_block_size[1])
-                    z_start = max(file_z*cell_block_size, cords[2])
-                    z_end = min((file_z + 1) * cell_block_size, cords[2] + grid_block_size[2])
+                # grid block slice position for the current file
+                x_start = max(file_x*cell_block_size, cords[0])
+                x_end = min((file_x + 1) * cell_block_size, cords[0] + grid_block_size[0])
+                y_start = max(file_y*cell_block_size, cords[1])
+                y_end = min((file_y + 1) * cell_block_size, cords[1] + grid_block_size[1])
+                z_start = max(file_z*cell_block_size, cords[2])
+                z_end = min((file_z + 1) * cell_block_size, cords[2] + grid_block_size[2])
 
-                    # Place the current file in the grid block
-                    try:
-                        grid_block[z_start - cords[2]:z_end - cords[2], x_start - cords[0]:x_end - cords[0], y_start - cords[1]:y_end - cords[1]] = images[z_start - file_z*cell_block_size: z_end - file_z*cell_block_size, x_start - file_x*cell_block_size: x_end - file_x*cell_block_size, y_start - file_y*cell_block_size: y_end - file_y*cell_block_size]
-                    except:
-                        print(f"Error in grid block placement for grid block {cords} and file {file_x}, {file_y}, {file_z}")
+                # Place the current file in the grid block
+                try:
+                    grid_block[z_start - cords[2]:z_end - cords[2], x_start - cords[0]:x_end - cords[0], y_start - cords[1]:y_end - cords[1]] = images[z_start - file_z*cell_block_size: z_end - file_z*cell_block_size, x_start - file_x*cell_block_size: x_end - file_x*cell_block_size, y_start - file_y*cell_block_size: y_end - file_y*cell_block_size]
+                except:
+                    print(f"Error in grid block placement for grid block {cords} and file {file_x}, {file_y}, {file_z}")
 
-        return grid_block
+    return grid_block
 
 def load_ppm_cubes(path, cube_size=500):
     with PPMParser(path).open() as ppm:
