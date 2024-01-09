@@ -4,7 +4,6 @@ from rendering_utils.interpolate_image_3d import extract_from_image_3d, insert_i
 from rendering_utils.ppmparser import PPMParser
 import argparse
 from tqdm import tqdm
-import struct
 
 import os
 import tifffile
@@ -15,6 +14,7 @@ import torch
 from concurrent.futures import ThreadPoolExecutor, as_completed
 # nr threads
 import multiprocessing
+
 
 def load_grid(path_template, cords, grid_block_size=500, cell_block_size=500, uint8=True):
     """
@@ -73,6 +73,7 @@ def load_grid(path_template, cords, grid_block_size=500, cell_block_size=500, ui
 
     return grid_block
 
+
 def load_ppm_cubes(path, cube_size=500):
     with PPMParser(path).open() as ppm:
         im_shape = ppm.im_shape()
@@ -88,16 +89,8 @@ def cube_coords(cube_key, padding, cube_size):
 def load_and_process_grid_volume(layers, cubes, cube, args, path_template, axis_swap_trans):
     # construct volume indexing
     cube_ppm = cubes[cube]
-    cube_xyz = np.zeros((len(cube_ppm), 3), dtype=np.float32)
-    cube_normals = np.zeros((len(cube_ppm), 3), dtype=np.float32)
-    cube_image_positions = np.zeros((len(cube_ppm), 2), dtype=np.int32)
-    for i, c_ in enumerate(cube_ppm):
-        c = struct.unpack('<dddddd', c_)
-        cube_xyz[i] = c[2:5]
-        cube_normals[i] = c[5:]
-        cube_image_positions[i] = c[:2][::-1]
-    xyz = torch.tensor(cube_xyz, dtype=torch.float32).cuda()
-    normals = torch.tensor(cube_normals, dtype=torch.float32).cuda()
+    xyz = torch.tensor(np.array([c[2:5] for c in cube_ppm], dtype=np.float32), dtype=torch.float32).cuda()
+    normals = torch.tensor(np.array([c[5:] for c in cube_ppm], dtype=np.float32), dtype=torch.float32).cuda()
     # construct all coordinate in positive and negative r
     coords = torch.cat([xyz + r * normals for r in range(-args.r, args.r+1)], dim=0)
 
@@ -123,7 +116,7 @@ def load_and_process_grid_volume(layers, cubes, cube, args, path_template, axis_
     del coords
 
     # construct layers coords
-    xy = torch.tensor(cube_image_positions, dtype=torch.int32).cpu()  # x, y coordinates
+    xy = torch.tensor(np.array([c[:2][::-1] for c in cube_ppm]), dtype=torch.int32).cpu()  # x, y coordinates
     # construct z coordinates for each layer
     z_layers = torch.arange(0, 2*args.r+1, dtype=torch.int32).repeat(len(cube_ppm), 1).T.contiguous().view(-1).cpu()
     # repeat xy coordinates for each layer
