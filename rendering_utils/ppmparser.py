@@ -4,7 +4,6 @@ import struct
 
 import numpy as np
 
-
 class PPMParser(object):
 
     def __init__(self, filename, step=None):
@@ -113,5 +112,5 @@ class PPMParser(object):
             cube_coord = tuple((int(x // cube_size), int(y // cube_size), int(z // cube_size)))
             if cube_coord not in cubes:
                 cubes[cube_coord] = []
-            cubes[cube_coord].append((int(imx), int(imy), float(x), float(y), float(z), float(nx), float(ny), float(nz)))
+            cubes[cube_coord].append((int(imx), int(imy), buf))
         return cubes
