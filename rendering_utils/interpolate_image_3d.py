@@ -1,4 +1,4 @@
-# Adjusted from https://github.com/teamtomo/libtilt/blob/b09dd9b245a3ca48354161cb6126d192a6af3e78/src/libtilt/interpolation/interpolate_image_3d.py, https://github.com/teamtomo/libtilt/blob/b09dd9b245a3ca48354161cb6126d192a6af3e78/src/libtilt/coordinate_utils.py#L7
+# Adjusted from https://github.com/teamtomo/libtilt/blob/b09dd9b245a3ca48354161cb6126d192a6af3e78/src/libtilt/interpolation/interpolate_image_3d.py, https://github.com/teamtomo/libtilt/blob/b09dd9b245a3ca48354161cb6126d192a6af3e78/src/libtilt/coordinate_utils.py#L7 , licenced under BSD licence https://github.com/teamtomo/libtilt/blob/main/LICENSE
 
 from typing import Literal
 
