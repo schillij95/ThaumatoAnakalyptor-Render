@@ -1,4 +1,6 @@
 # Copyright 2023 by kglspl, MIT (see LICENSE)
+# Adjusted by Julian Schilliger - ThaumatoAnakalyptor - Vesuvius Challenge 2023, MIT (see LICENSE)
+
 import os
 import struct
 
